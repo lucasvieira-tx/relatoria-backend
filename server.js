@@ -9,6 +9,7 @@ import reportCreateHandler from "./api/report/index.js";
 import reportStatusHandler from "./api/report/status.js";
 import reportViewHandler from "./api/report/view.js";
 import reportSendEmailHandler from "./api/report/send_email.js";
+import libraryHandler from "./api/library/index.js";
 
 // Load environment variables
 dotenv.config();
@@ -93,6 +94,15 @@ app.post("/api/report/send_email", async (req, res) => {
   }
 });
 
+app.get("/api/library", async (req, res) => {
+  try {
+    await libraryHandler(req, res);
+  } catch (error) {
+    console.error("Error in /api/library:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -106,6 +116,7 @@ app.listen(PORT, () => {
   console.log(`   POST /api/report - Create report`);
   console.log(`   GET  /api/report/view?id= - View report`);
   console.log(`   POST /api/report/send_email?id= - Send report via email`);
+  console.log(`   GET  /api/library - Get library`);
 
   // Start the worker process
   const worker = fork("./worker/parse_worker.js");

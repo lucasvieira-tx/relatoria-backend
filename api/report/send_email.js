@@ -74,9 +74,32 @@ export default async function handler(req, res) {
 
   // create signed url for attachment or link
   console.log("🔗 - [Send Email] Creating signed URL for PDF...");
+  console.log("📁 - [Send Email] PDF path:", rr.pdf_path);
+
+  // Extrair bucket e path do pdf_path
+  const pathParts = rr.pdf_path.split("/");
+  let bucketName = "reports_pdf"; // default
+  let filePath = rr.pdf_path;
+
+  // Se o primeiro segmento parece ser um bucket (contém "report" ou "pdf")
+  if (
+    pathParts.length > 1 &&
+    (pathParts[0].includes("report") || pathParts[0].includes("pdf"))
+  ) {
+    bucketName = pathParts[0];
+    filePath = pathParts.slice(1).join("/");
+  }
+
+  console.log(
+    "🗂️ - [Send Email] Bucket:",
+    bucketName,
+    "| File path:",
+    filePath
+  );
+
   const { data: signed, error: sErr } = await supabaseAdmin.storage
-    .from("reports")
-    .createSignedUrl(rr.pdf_path, 60 * 60); // 1 hour
+    .from(bucketName)
+    .createSignedUrl(filePath, 60 * 60); // 1 hour
   if (sErr) {
     console.error(
       "❌ - [Send Email] Failed to create signed URL:",
@@ -98,7 +121,7 @@ export default async function handler(req, res) {
     }
 
     const emailPayload = {
-      from: "joaol.contato@gmail.com",
+      from: process.env.RESEND_FROM,
       to: [to],
       subject,
       html: `<p>${message}</p><p>Download do PDF: <a href="${pdf_url}">baixar relatório</a></p>`,

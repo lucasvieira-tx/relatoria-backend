@@ -78,7 +78,8 @@ export async function extractFromXLSX(buffer, options = {}) {
         return obj;
     });
 
-    // reutiliza a função CSV para análise
-    const fakeBuffer = Buffer.from(require("papaparse").unparse(dataRows));
+    // reutiliza a função CSV para análise usando o próprio import ES Module
+    const csvText = Papa.unparse(dataRows);
+    const fakeBuffer = Buffer.from(csvText);
     return extractFromCSV(fakeBuffer, options);
 }

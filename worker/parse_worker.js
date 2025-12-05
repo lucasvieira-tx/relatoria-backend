@@ -4,8 +4,8 @@ import path from "path";
 import { supabaseAdmin } from "./helpers/supabaseAdmin.js";
 import { extractFromCSV, extractFromXLSX } from "./schemaExtractor.js";
 
-const POLL_INTERVAL = 24 * 60 * 60 * 1000;
-const MAX_SAMPLE_SIZE = 5000;
+const POLL_INTERVAL = 60000;
+const MAX_SAMPLE_SIZE = 100;
 
 /**
  * Seleciona um dataset com status 'uploaded', marca-o como 'processing' e retorna o dataset atualizado.
@@ -13,22 +13,6 @@ const MAX_SAMPLE_SIZE = 5000;
  *
  * @returns {Promise<object | null>} O dataset processado se a operação for bem-sucedida, ou `null` em caso de erro ou se nenhum dataset for encontrado.
  */
-async function pickOneAndMarkProcessing() {
-  const sql = `
-        update datasets set status='processing'
-        where id = (
-            select id from datasets where status='uploaded' order by created_at asc limit 1
-        )
-        returning *
-    `;
-
-  const { data, error } = await supabaseAdmin
-    .rpc("sql", { q: sql })
-    .catch(() => ({ data: null, error: null }));
-
-  return null;
-}
-
 /**
  * Seleciona um dataset com status 'uploaded', marca-o como 'processing' e retorna o dataset atualizado.
  * Utiliza uma transação implícita (seleção seguida de atualização) para tentar garantir que apenas um worker processe um dataset por vez.

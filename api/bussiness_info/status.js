@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     ownerId
   );
   const { data: records, error: fetchErr } = await supabaseAdmin
-    .from("bussiness_info")
+    .from("business_info")
     .select("*")
     .eq("owner_id", ownerId)
     .order("created_at", { ascending: false });

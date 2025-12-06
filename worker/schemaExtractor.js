@@ -83,3 +83,4 @@ export async function extractFromXLSX(buffer, options = {}) {
     const fakeBuffer = Buffer.from(csvText);
     return extractFromCSV(fakeBuffer, options);
 }
+

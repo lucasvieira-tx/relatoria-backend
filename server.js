@@ -185,15 +185,15 @@ app.listen(PORT, () => {
     console.log(`⚠️ [Dataset Worker] Exited with code ${code}`);
   });
 
-  // // Start report generation worker
-  // const reportWorker = fork("./worker/index.js");
-  // reportWorker.on("message", (msg) => {
-  //   console.log(`👷 [Report Worker] ${msg}`);
-  // });
-  // reportWorker.on("error", (err) => {
-  //   console.error(`❌ [Report Worker] Error: ${err.message}`);
-  // });
-  // reportWorker.on("exit", (code) => {
-  //   console.log(`⚠️ [Report Worker] Exited with code ${code}`);
-  // });
+  // Start report generation worker
+  const reportWorker = fork("./worker/report_worker.js");
+  reportWorker.on("message", (msg) => {
+    console.log(`👷 [Report Worker] ${msg}`);
+  });
+  reportWorker.on("error", (err) => {
+    console.error(`❌ [Report Worker] Error: ${err.message}`);
+  });
+  reportWorker.on("exit", (code) => {
+    console.log(`⚠️ [Report Worker] Exited with code ${code}`);
+  });
 });

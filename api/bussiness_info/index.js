@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
   console.log("💾 - [Business Info] Saving business info...");
   const { data: inserted, error: insertErr } = await supabaseAdmin
-    .from("bussiness_info")
+    .from("business_info")
     .insert({
       id: randomUUID(),
       ...payload,

@@ -4,7 +4,7 @@ import path from "path";
 import { supabaseAdmin } from "./helpers/supabaseAdmin.js";
 import { extractFromCSV, extractFromXLSX } from "./schemaExtractor.js";
 
-const POLL_INTERVAL = 60000;
+const POLL_INTERVAL = 30000;
 const MAX_SAMPLE_SIZE = 100;
 
 /**
@@ -126,6 +126,7 @@ async function processDataset(ds) {
     status: "parsed",
     parsed_at: new Date().toISOString(),
     sample_path: sample_path,
+    sample_json: sampleJson,
   };
   const { error: updErr } = await supabaseAdmin
     .from("datasets")

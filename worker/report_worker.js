@@ -10,6 +10,7 @@ import { detectPII, replacePII } from "./src/utils.js";
 // import { buildHtml } from "./htmlBuilder";
 // import { downloadFromStorage } from "./storage";
 import { createClient } from "@supabase/supabase-js";
+import { getAIResponse } from "./src/ai_clients/aiClient.js";
 
 const MAX_RETRIES = 3;
 const POLL_INTERVAL = 30000;
@@ -18,6 +19,14 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+const AI_MODEL = process.env.AI_MODEL || "gpt-4o-mini";
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS) || 30000;
+
+const AI_OPTS = {
+  model: AI_MODEL,
+  timeoutMs: AI_TIMEOUT_MS,
+};
 
 const AI_OUTPUT_SCHEMA = `
 {
@@ -167,40 +176,30 @@ async function processJob(job) {
 
     console.log("🔍 - [Report Worker] Prompt built successfully", prompt);
 
-    // // call AI
-    // console.log("🤖 - [Report Worker] Calling AI service...");
-    // const ai_response = await callAI(prompt);
-    // console.log("✅ - [Report Worker] AI response received");
+    const { parsed, raw, text, usage, validationErrors } = await getAIResponse(
+      prompt,
+      AI_OPTS
+    );
+    if (!parsed) {
+      console.warn(
+        "❌ - [Report Worker] AI response not parsed",
+        validationErrors
+      );
+      console.warn("❌ - [Report Worker] AI response raw", text);
+      return;
+    }
 
-    // // generate HTML
-    // console.log("📄 - [Report Worker] Generating HTML...");
-    // const html = buildHtml(ai_response);
-    // console.log("✅ - [Report Worker] HTML generated");
-
-    // // generate PDF
-    // console.log("📑 - [Report Worker] Generating PDF...");
-    // const pdfBuffer = await generatePdf(html);
-    // console.log("✅ - [Report Worker] PDF generated successfully");
-
-    // // upload to storage
-    // console.log("☁️ - [Report Worker] Uploading PDF to storage...");
-    // const path = `reports/${reportId}.pdf`;
-    // await supabase.storage.from("reports").upload(path, pdfBuffer, {
-    //   contentType: "application/pdf",
-    //   upsert: true,
-    // });
-    // console.log("✅ - [Report Worker] PDF uploaded to:", path);
-
-    // // update final status
-    // console.log("💾 - [Report Worker] Updating final status...");
-    // await supabase
-    //   .from("report_requests")
-    //   .update({
-    //     status: "done",
-    //     pdf_path: path,
-    //     ai_response,
-    //   })
-    //   .eq("id", reportId);
+    // update final status
+    console.log("💾 - [Report Worker] Updating final status...");
+    // TODO: Validar qual é o valor medio de tokens por resposta do AI
+    await supabase
+      .from("report_requests")
+      .update({
+        status: "done",
+        ai_response: parsed,
+        usage_tokens: usage?.total_tokens || 100,
+      })
+      .eq("id", reportId);
 
     console.log("🎉 - [Report Worker] Job completed successfully:", reportId);
     await log(reportId, "done", "Relatório finalizado");

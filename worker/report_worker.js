@@ -102,11 +102,15 @@ async function processJob(job) {
     const columns = dataset.columns || [];
     const sampleRaw = dataset.sample_json;
     // load business niche
-    const { data: businessInfo, error: businessInfoError } = await supabase
+    const { data: businessInfoArr, error: businessInfoError } = await supabase
       .from("business_info")
       .select("*")
       .eq("owner_id", job.owner_id)
       .limit(1);
+
+    const businessInfo = Array.isArray(businessInfoArr)
+      ? businessInfoArr[0]
+      : businessInfoArr || null;
 
     console.log("🔍 - [Report Worker] Business info loaded:", businessInfo);
 
@@ -161,7 +165,7 @@ async function processJob(job) {
       );
     }
 
-    console.log("🔍 - [Report Worker] Prompt built successfully");
+    console.log("🔍 - [Report Worker] Prompt built successfully", prompt);
 
     // // call AI
     // console.log("🤖 - [Report Worker] Calling AI service...");

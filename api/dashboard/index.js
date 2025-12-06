@@ -38,7 +38,10 @@ export default async function handler(req, res) {
   const userId =
     req.query.user_id || req.query.userId || req.query.id || user.id;
   if (userId !== user.id) {
-    console.warn("⚠️ - [Dashboard] User mismatch", { userId, authUser: user.id });
+    console.warn("⚠️ - [Dashboard] User mismatch", {
+      userId,
+      authUser: user.id,
+    });
     return res.status(403).json({ error: "Forbidden: mismatched user" });
   }
 
@@ -88,7 +91,13 @@ export default async function handler(req, res) {
     const doneLastMonth = doneReportsLastMonth.count || 0;
     const invalidTotal = invalidReports.count || 0;
 
-    const hoursSaved = Math.floor(doneTotal * 1.5);
+    let hoursSaved = 0;
+    if (doneTotal === 0) {
+      hoursSaved = Math.floor(total * 1.5);
+    } else {
+      hoursSaved = Math.floor(doneTotal * 1.5);
+    }
+
     const successRate =
       total === 0
         ? 0
@@ -115,7 +124,8 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("❌ - [Dashboard] Error computing metrics:", err.message);
-    return res.status(500).json({ error: "Failed to compute dashboard metrics" });
+    return res
+      .status(500)
+      .json({ error: "Failed to compute dashboard metrics" });
   }
 }
-

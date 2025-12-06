@@ -13,6 +13,8 @@ import reportSendEmailHandler from "./api/report/send_email.js";
 import reportDeleteHandler from "./api/report/delete.js";
 import libraryHandler from "./api/library/index.js";
 import dashboardHandler from "./api/dashboard/index.js";
+import bussinessInfoHandler from "./api/bussiness_info/index.js";
+import bussinessInfoStatusHandler from "./api/bussiness_info/status.js";
 
 // Load environment variables
 dotenv.config();
@@ -133,6 +135,24 @@ app.get("/api/dashboard", async (req, res) => {
   }
 });
 
+app.post("/api/bussiness_info", async (req, res) => {
+  try {
+    await bussinessInfoHandler(req, res);
+  } catch (error) {
+    console.error("Error in /api/bussiness_info:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/api/bussiness_info/status", async (req, res) => {
+  try {
+    await bussinessInfoStatusHandler(req, res);
+  } catch (error) {
+    console.error("Error in /api/bussiness_info/status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -150,6 +170,8 @@ app.listen(PORT, () => {
   console.log(`   DELETE /api/report/delete?id= - Delete report`);
   console.log(`   GET  /api/library - Get library`);
   console.log(`   GET  /api/dashboard - Get dashboard metrics`);
+  console.log(`   POST /api/bussiness_info - Save business info`);
+  console.log(`   GET  /api/bussiness_info/status - Get business info status`);
 
   // Start dataset parse worker
   const datasetWorker = fork("./worker/parse_worker.js");

@@ -13,7 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getAIResponse } from "./src/ai_clients/aiClient.js";
 
 const MAX_RETRIES = 3;
-const POLL_INTERVAL = 30000;
+const POLL_INTERVAL = 30000; // 24horas - 24 * 60 * 60 * 1000
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -30,14 +30,30 @@ const AI_OPTS = {
 
 const AI_OUTPUT_SCHEMA = `
 {
- "summary": "string",
- "insights": [{"text":"string","confidence":"low|medium|high"}],
- "charts":[
-   {"type":"bar|line|pie|table|scatter","title":"string","columns":["string"],"description":"string","config":{}}
- ],
- "kpis":[{"label":"string","value":null|number|string,"unit":"string"}],
- "meta":{"rows_sampled": number,"schema":[{"name":"string","type":"string"}],"warnings":["string"]}
-}
+    "summary": "Texto do resumo aqui...",
+    "insights": [
+      {"text": "Dica de negócio...", "confidence": "high"}
+    ],
+    "kpis": [
+      {"label": "Faturamento Total", "value": 1500.50, "unit": "R$"}
+    ],
+    "charts": [
+      {
+        "type": "bar | line | pie | donut | area | table | multi-bar | multi-line | scatter",
+        "title": "Título do Gráfico",
+        "description": "Explicação curta do que estamos vendo",
+        "columns": ["Nome da Categoria (Eixo X)", "Valor Numérico (Eixo Y)"],
+        "data_rows": [
+          ["Categoria A", 150],
+          ["Categoria B", 300]
+        ]
+      }
+    ],
+    "meta": {
+      "rows_sampled": 30,
+      "warnings": ["Aviso se houver dados faltando"]
+    }
+  }
 `;
 
 async function getNextJob() {
@@ -154,6 +170,9 @@ async function processJob(job) {
       return row;
     });
 
+    // niche guidelines
+    const nicheGuidelines = getNicheGuidelines(businessInfo.niche_bussiness);
+
     // build prompt
     console.log("🔨 - [Report Worker] Building AI prompt...");
     let prompt = null;
@@ -163,7 +182,8 @@ async function processJob(job) {
         columns,
         sanitizedSample,
         job.parameters,
-        AI_OUTPUT_SCHEMA
+        AI_OUTPUT_SCHEMA,
+        nicheGuidelines
       );
     } else {
       prompt = buildMainPrompt(
@@ -207,6 +227,30 @@ async function processJob(job) {
     console.error("❌ - [Report Worker] Job failed:", reportId, err.message);
     await handleFailure(job, err);
   }
+}
+
+function getNicheGuidelines(nicheBusiness) {
+  const nicheGuidelines = {
+    estetica:
+      "Para este nicho, foque em gráficos de Tratamentos Mais Vendidos (Bar), Faturamento por Dia da Semana (Bar) e Retenção de Clientes (Pie). Termos chave: Procedimentos, Pacientes, Ticket Médio.",
+    roupas:
+      "Foque em Vendas por Categoria (Pie/Donut), Tendência de Vendas Diárias (Line) e Top Produtos (Bar). Termos chave: Peças, Coleção, Estoque, Ticket Médio.",
+    consultoria:
+      "Foque em Receita por Cliente (Bar), Margem de Lucro (Line) e Status de Projetos. Termos chave: Honorários, Contratos, Projetos.",
+    marketing:
+      "Foque em Origem de Leads (Pie), Custo por Lead (Line) e Conversão de Campanhas (Bar). Termos chave: Leads, ROI, Tráfego, Campanhas.",
+    financeiro:
+      "Foque estritamente em Entradas vs Saídas (Multi-Bar/Line), Categorias de Despesas (Pie) e Lucratividade. Termos chave: Receita, Despesa, Saldo, Inadimplência.",
+    educacao:
+      "Foque em Alunos por Curso (Bar), Taxa de Evasão/Cancelamento (Line) e Receita por Turma. Termos chave: Matrículas, Alunos, Turmas, Mensalidades.",
+    default:
+      "Foque em Tendência Temporal (Line), Distribuição por Categoria (Pie) e Rankings de Performance (Bar).",
+  };
+
+  // Seleciona a guideline baseada no input do usuário
+  const selectedGuideline =
+    nicheGuidelines[nicheBusiness.toLowerCase()] || nicheGuidelines["default"];
+  return selectedGuideline;
 }
 
 async function handleFailure(job, error) {

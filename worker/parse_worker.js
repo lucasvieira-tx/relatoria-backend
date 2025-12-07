@@ -4,7 +4,7 @@ import path from "path";
 import { supabaseAdmin } from "./helpers/supabaseAdmin.js";
 import { extractFromCSV, extractFromXLSX } from "./schemaExtractor.js";
 
-const POLL_INTERVAL = 30000;
+const POLL_INTERVAL = 30000; // 24horas - 24 * 60 * 60 * 1000
 const MAX_SAMPLE_SIZE = 100;
 
 /**

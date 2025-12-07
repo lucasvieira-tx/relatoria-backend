@@ -65,60 +65,79 @@ export function buildPromptWithBusinessNiche(
   schema,
   sample,
   parameters,
-  schemaSpec
+  schemaSpec,
+  nicheGuidelines
 ) {
-// 1. Pré-processamento das variáveis para texto legível
-const userGoals = [
-  ...(businessInfo.goal?.selected || []), 
-  businessInfo.goal?.other
-].filter(Boolean).join(', '); // Ex: "Aumentar faturamento, Reduzir custos"
+  // 1. Pré-processamento das variáveis para texto legível
+  const userGoals = [
+    ...(businessInfo.goal?.selected || []),
+    businessInfo.goal?.other,
+  ]
+    .filter(Boolean)
+    .join(", "); // Ex: "Aumentar faturamento, Reduzir custos"
 
-const userPriorities = (businessInfo.info_priority || []).join(', '); // Ex: "crescimento, produtos"
+  const userPriorities = (businessInfo.info_priority || []).join(", "); // Ex: "crescimento, produtos"
 
-const formatPreference = businessInfo.best_data_format_to_view === 'graficos' 
-  ? "Priorize visualizações gráficas (bar, line, pie, scatter). Evite tabelas simples, a menos que estritamente necessário." 
-  : "Equilibre entre gráficos e tabelas detalhadas.";
+  const formatPreference =
+    businessInfo.best_data_format_to_view === "graficos"
+      ? "Priorize visualizações gráficas (bar, line, pie, scatter). Evite tabelas simples, a menos que estritamente necessário."
+      : "Equilibre entre gráficos e tabelas detalhadas.";
 
-// 2. O Prompt Montado
-return `
-  Você é um Consultor de Inteligência de Negócios Sênior, especialista no nicho: ${businessInfo.niche_bussiness}.
+  // 2. O Prompt Montado
+  return `
+ Você é um Consultor de Inteligência de Negócios Sênior, especialista no nicho: ${
+   businessInfo.niche_bussiness
+ }.
   
-  Sua missão é analisar os dados brutos e fornecer clareza estratégica para um pequeno empreendedor brasileiro.
+  Sua missão é analisar os dados brutos e fornecer clareza estratégica e dados prontos para visualização.
   IMPORTANTE: Retorne APENAS JSON válido. Não escreva nada fora de JSON.
   
   --- CONTEXTO DO USUÁRIO ---
-  1. Nicho: ${businessInfo.niche_bussiness} (Adapte a linguagem e termos para este mercado).
-  2. Objetivos do Usuário: ${userGoals || 'Análise geral de performance'}.
-  3. Prioridade de Análise: ${userPriorities || 'Visão geral'}.
+  1. Nicho: ${
+    businessInfo.niche_bussiness
+  } (Adapte a linguagem para este mercado).
+  2. Objetivos: ${userGoals || "Análise geral de performance"}.
+  3. Prioridades: ${userPriorities || "Visão geral"}.
   4. Preferência Visual: ${businessInfo.best_data_format_to_view}.
   
   --- DADOS TÉCNICOS ---
   - Schema das colunas: ${JSON.stringify(schema)}
   - Amostra de dados (máx 30 linhas): ${JSON.stringify(sample)}
   
-  --- TAREFAS DE ANÁLISE ---
+  --- DIRETRIZES DE NICHO ---
+   Use estas regras específicas para escolher os gráficos e a linguagem:
+  "${nicheGuidelines}"
   
-  1) SUMMARY (Resumo Executivo):
-     - Escreva um parágrafo (máx 150 palavras) em linguagem natural e direta.
-     - Foque nos objetivos (${userGoals}) e nas prioridades (${userPriorities}).
-     - Diga o "o quê", "por que" e "o que fazer".
+  --- TAREFAS ---
   
-  2) INSIGHTS (Dicas Acionáveis):
-     - Gere até 5 insights curtos e práticos.
-     - Conecte os insights diretamente ao nicho "${businessInfo.niche_bussiness}".
-     - Exemplo ruim: "As vendas subiram". 
-     - Exemplo bom (para estética): "O tratamento de Botox aumentou 20%, sugerindo alta demanda para procedimentos faciais neste mês".
+  1) SUMMARY: Resumo executivo (máx 150 palavras) focado nos objetivos.
+      - Escreva um parágrafo (máx 150 palavras) em linguagem natural e direta.
+      - Foque nos objetivos (${userGoals}) e nas prioridades (${userPriorities}).
+      - Diga o "o quê", "por que" e "o que fazer".
+
+  2) INSIGHTS: 5 dicas acionáveis para o nicho  ${businessInfo.niche_bussiness}.
+      - Gere até 5 insights curtos e práticos.
+      - Conecte os insights diretamente ao nicho "${
+        businessInfo.niche_bussiness
+      }".
+      - Exemplo ruim: "As vendas subiram". 
+      - Exemplo bom (para estética): "O tratamento de Botox aumentou 20%, sugerindo alta demanda para procedimentos faciais neste mês".
   
-  3) KPIS (Indicadores Chave):
-     - Selecione até 6 métricas numéricas cruciais baseadas na prioridade: ${userPriorities}.
-     - Defina labels amigáveis (Ex: "Faturamento Total" em vez de "sum_price").
+  3) KPIS: 6 métricas numéricas principais.
+      - Selecione até 6 métricas numéricas cruciais baseadas na prioridade: ${userPriorities}.
+      - Defina labels amigáveis (Ex: "Faturamento Total" em vez de "sum_price").
   
-  4) CHARTS (Sugestão Visual):
-     - Sugira até 4 visualizações.
-     - ${formatPreference}
-     - Escolha o tipo de gráfico que melhor conta a história daquele dado (Ex: Linha para tempo, Pizza para distribuição).
-  
-  --- REGRAS DE SEGURANÇA E FORMATO ---
+  4) CHARTS (Muito Importante):
+     - Sugira até 8 visualizações visuais (Bar, Line, Pie, Area, Scatter, Donut, Multi-Bar, Multi-Line) e tabelas se necessário.
+     - **OBRIGATÓRIO:** Para cada gráfico, você deve CALCULAR os dados agregados e preencher o campo "data_rows".
+     - Exemplo: Se for um gráfico de "Vendas por Vendedor", o "data_rows" deve conter [["João", 1200], ["Maria", 3000]]. Não retorne dados crus, agrupe-os!
+     - Limite "data_rows" a no máximo 10 itens (top 10) para o gráfico não ficar poluido.
+      - Escolha o tipo de gráfico que melhor conta a história daquele dado (Ex: Linha para tempo, Pizza para distribuição).
+      IMPORTANTE: Siga as diretrizes de nicho acima para escolher gráficos que façam sentido para um dono de ${
+        businessInfo.niche_bussiness
+      }.
+
+  --- REGRAS DE SEGURANÇA E FORMATO (Respeite estritamente ---
   - Retorne estritamente o JSON preenchendo o schema abaixo.
   - Se encontrar PII (CPF, RG, Email pessoal), ignore a coluna ou mascare o valor.
   - Se os dados estiverem vazios ou insuficientes, preencha o campo "warnings" explicando o motivo amigavelmente.

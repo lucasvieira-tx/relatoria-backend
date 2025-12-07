@@ -39,7 +39,17 @@ const aiSchema = {
         properties: {
           type: { type: "string" },
           title: { type: "string" },
-          columns: { type: "array", items: { type: "string" } },
+          columns: {
+            type: "array",
+            items: { type: "string" },
+          },
+          data_rows: {
+            type: "array",
+            items: {
+              type: "array",
+              items: { type: ["string", "number"] },
+            },
+          },
           description: { type: "string", nullable: true },
           config: {
             type: "object",
@@ -47,7 +57,7 @@ const aiSchema = {
             additionalProperties: true,
           },
         },
-        required: ["type", "title", "columns"],
+        required: ["type", "title", "columns", "data_rows"],
       },
     },
     kpis: {
@@ -76,7 +86,7 @@ const aiSchema = {
         },
         warnings: { type: "array", items: { type: "string" }, nullable: true },
       },
-      required: ["rows_sampled", "schema"],
+      required: ["rows_sampled"],
     },
   },
   required: ["summary", "insights", "charts", "kpis", "meta"],

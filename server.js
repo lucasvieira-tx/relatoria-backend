@@ -15,6 +15,7 @@ import libraryHandler from "./api/library/index.js";
 import dashboardHandler from "./api/dashboard/index.js";
 import bussinessInfoHandler from "./api/bussiness_info/index.js";
 import bussinessInfoStatusHandler from "./api/bussiness_info/status.js";
+import aiReportHandler from "./api/report/ai_report.js";
 
 // Load environment variables
 dotenv.config();
@@ -153,6 +154,15 @@ app.get("/api/bussiness_info/status", async (req, res) => {
   }
 });
 
+app.get("/api/report/ai_report", async (req, res) => {
+  try {
+    await aiReportHandler(req, res);
+  } catch (error) {
+    console.error("Error in /api/report/ai_report:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -172,6 +182,7 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/dashboard - Get dashboard metrics`);
   console.log(`   POST /api/bussiness_info - Save business info`);
   console.log(`   GET  /api/bussiness_info/status - Get business info status`);
+  console.log(`   GET  /api/report/ai_report?id= - Get AI report`);
 
   // Start dataset parse worker
   const datasetWorker = fork("./worker/parse_worker.js");
